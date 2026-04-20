@@ -1,1 +1,115 @@
+{% extends "base.html" %}
+{% block title %}Staff Login | VVITU Bus Management{% endblock %}
+{% block extra_head %}
+<style>
+.login-wrap{min-height:calc(100vh - 64px);display:flex;align-items:center;justify-content:center;padding:32px 24px}
+.login-box{width:100%;max-width:500px}
+.login-header{text-align:center;margin-bottom:28px}
+.login-header .icon-circle{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 16px}
+.login-header h2{font-family:'Rajdhani',sans-serif;font-size:32px;font-weight:700;color:var(--accent)}
+.toggle-wrap{display:grid;grid-template-columns:1fr 1fr;background:var(--navy2);border-radius:10px;padding:4px;margin-bottom:28px;border:1px solid var(--border)}
+.toggle-btn{padding:11px;text-align:center;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;transition:all .25s;color:var(--muted)}
+.toggle-btn.active{background:var(--card);color:var(--accent);box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.form-panel{display:none}
+.form-panel.active{display:block}
+.login-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:36px;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.demo-box{background:var(--navy2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-top:18px;font-size:13px}
+.demo-box h4{color:var(--accent);font-size:12px;font-weight:600;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+.demo-box p{color:var(--muted);font-size:12px}
+</style>
+{% endblock %}
+{% block content %}
+<div class="login-wrap">
+  <div class="login-box">
+    <div class="login-header">
+      <div class="icon-circle">👨‍💼</div>
+      <h2>Staff Portal</h2>
+      <p style="color:var(--muted);font-size:14px;margin-top:6px">VVITU Transport Management</p>
+    </div>
+    <div class="login-card">
+      <div class="toggle-wrap">
+        <div class="toggle-btn active" id="tab-existing" onclick="showTab('existing')">
+          🔑 Already Registered
+        </div>
+        <div class="toggle-btn" id="tab-new" onclick="showTab('new')">
+          ✍️ New Registration
+        </div>
+      </div>
 
+      <!-- EXISTING LOGIN -->
+      <div class="form-panel active" id="panel-existing">
+        <div style="margin-bottom:20px">
+          <div style="font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:600;color:var(--teal);margin-bottom:6px">Welcome Back!</div>
+          <div style="color:var(--muted);font-size:13px">Enter your credentials to access the admin panel.</div>
+        </div>
+        <form method="POST" action="/staff-login/existing">
+          <div class="form-group">
+            <label>Username</label>
+            <input type="text" name="username" placeholder="Your username" required autofocus>
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" name="password" placeholder="Your password" required>
+          </div>
+          <button type="submit" class="btn btn-accent btn-full" style="margin-top:8px">
+            Login to Admin Panel →
+          </button>
+        </form>
+        <div class="demo-box">
+          <h4>Demo Account</h4>
+          <p>Register below to create your account, then login here. No demo accounts pre-seeded for staff.</p>
+        </div>
+      </div>
+
+      <!-- NEW REGISTRATION -->
+      <div class="form-panel" id="panel-new">
+        <div style="margin-bottom:20px">
+          <div style="font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:600;color:var(--green);margin-bottom:6px">Create Your Account</div>
+          <div style="color:var(--muted);font-size:13px">Register as a new staff member to access the system.</div>
+        </div>
+        <form method="POST" action="/staff-login/register">
+          <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" name="name" placeholder="e.g. Ramesh Babu" required>
+          </div>
+          <div class="form-group">
+            <label>Username</label>
+            <input type="text" name="username" placeholder="Choose a username" required>
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" name="password" placeholder="Create a password" required>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div class="form-group">
+              <label>Bus Number</label>
+              <input type="text" name="bus_number" placeholder="e.g. BUS-101">
+            </div>
+            <div class="form-group">
+              <label>Departure Stop</label>
+              <input type="text" name="depart_stop" placeholder="e.g. Vijayawada">
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-full" style="margin-top:8px;background:linear-gradient(135deg,var(--green),var(--teal))">
+            Register & Continue →
+          </button>
+        </form>
+      </div>
+
+      <div style="text-align:center;margin-top:20px">
+        <a href="/" style="font-size:13px;color:var(--muted)">← Back to Home</a>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+function showTab(t){
+  ['existing','new'].forEach(x=>{
+    document.getElementById('panel-'+x).classList.toggle('active', x===t);
+    document.getElementById('tab-'+x).classList.toggle('active', x===t);
+  });
+}
+// Auto-switch to register tab if URL has #register
+if(location.hash==='#register') showTab('new');
+</script>
+{% endblock %}
