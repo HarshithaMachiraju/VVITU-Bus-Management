@@ -1,1 +1,31 @@
-
+{% extends "base.html" %}
+{% block title %}Bus Routes | VVITU Bus Management{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="page-title"><span>🛣️</span> Bus Routes</div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <div style="padding:18px 24px;border-bottom:1px solid var(--border)">
+      <div style="font-size:14px;color:var(--muted)">All active bus routes for the academic year 2024–25</div>
+    </div>
+    <div class="table-wrap" style="border:none;border-radius:0">
+      <table>
+        <thead><tr><th>Route No</th><th>Route Name</th><th>Bus No</th><th>First Departure</th><th>Stops</th></tr></thead>
+        <tbody>
+        {% for r in routes %}
+        <tr>
+          <td><span class="badge amber">{{ r.route_number }}</span></td>
+          <td style="font-weight:600">{{ r.route_name }}</td>
+          <td style="color:var(--accent);font-weight:600">{{ r.bus_number }}</td>
+          <td><span class="badge green">🕐 {{ r.timing }}</span></td>
+          <td style="font-size:13px;color:var(--muted)">{{ r.stops }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div style="margin-top:20px;color:var(--muted);font-size:13px">
+    * All buses return from VVITU Campus at 4:30 PM. Contact transport office for special routes.
+  </div>
+</div>
+{% endblock %}
