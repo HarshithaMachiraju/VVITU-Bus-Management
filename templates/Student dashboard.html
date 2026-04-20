@@ -1,1 +1,175 @@
+{% extends "base.html" %}
+{% block title %}{{ s.name }} | Student Dashboard{% endblock %}
+{% block extra_head %}
+<style>
+.dash-header{background:linear-gradient(135deg,var(--navy2),#0d1e3e);padding:36px 24px;border-bottom:1px solid var(--border)}
+.dash-header-inner{max-width:1300px;margin:0 auto;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.stu-avatar{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--blue));display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-size:28px;font-weight:700;color:#fff;flex-shrink:0}
+.stu-name{font-family:'Rajdhani',sans-serif;font-size:30px;font-weight:700}
+.stu-meta{color:var(--muted);font-size:14px;margin-top:4px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+@media(max-width:768px){.grid2{grid-template-columns:1fr}}
+.info-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);font-size:14px}
+.info-row:last-child{border-bottom:none}
+.info-row .lbl{color:var(--muted);font-weight:500}
+.info-row .val{font-weight:600;color:var(--text)}
+.fee-bar-wrap{margin:12px 0}
+.fee-bar-label{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:6px}
+.fee-bar{height:10px;background:var(--navy2);border-radius:5px;overflow:hidden;border:1px solid var(--border)}
+.fee-fill{height:100%;border-radius:5px;background:linear-gradient(90deg,var(--green),var(--teal));transition:width .8s ease}
+#map{height:380px;border-radius:12px;overflow:hidden;border:1px solid var(--border)}
+.bus-status{display:inline-flex;align-items:center;gap:6px;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3);color:#6ee7b7;padding:5px 14px;border-radius:20px;font-size:13px;font-weight:600}
+.bus-status .dot{width:8px;height:8px;border-radius:50%;background:#10b981;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+</style>
+{% endblock %}
+{% block content %}
+<div class="dash-header">
+  <div class="dash-header-inner">
+    <div class="stu-avatar">{{ s.name[0] }}</div>
+    <div>
+      <div class="stu-name">{{ s.name }}</div>
+      <div class="stu-meta">Roll: <b>{{ s.roll }}</b> &nbsp;·&nbsp; Bus: <b>{{ s.bus_number }}</b> &nbsp;·&nbsp; Route: <b>{{ s.route }}</b></div>
+    </div>
+    <div style="margin-left:auto;display:flex;gap:12px">
+      <div class="bus-status"><div class="dot"></div>Bus On Time</div>
+      <a href="/logout" class="btn btn-danger btn-sm">Logout</a>
+    </div>
+  </div>
+</div>
 
+<div class="container">
+  <div class="grid2">
+    <!-- Student Details -->
+    <div class="card">
+      <h3>👤 Student Information</h3>
+      <div class="info-row"><span class="lbl">Full Name</span><span class="val">{{ s.name }}</span></div>
+      <div class="info-row"><span class="lbl">Roll Number</span><span class="val" style="color:var(--teal)">{{ s.roll }}</span></div>
+      <div class="info-row"><span class="lbl">Bus Number</span><span class="val" style="color:var(--accent)">{{ s.bus_number }}</span></div>
+      <div class="info-row"><span class="lbl">Route</span><span class="val">{{ s.route }}</span></div>
+      <div class="info-row"><span class="lbl">Departure Stop</span><span class="val">{{ s.depart_stop }}</span></div>
+      {% if route %}
+      <div class="info-row"><span class="lbl">Route Name</span><span class="val">{{ route.route_name }}</span></div>
+      <div class="info-row"><span class="lbl">Pickup Time</span><span class="val" style="color:var(--green)">{{ route.timing }}</span></div>
+      <div class="info-row"><span class="lbl">Stops</span><span class="val" style="font-size:13px;text-align:right;max-width:55%">{{ route.stops }}</span></div>
+      {% endif %}
+    </div>
+
+    <!-- Fee Details -->
+    <div class="card">
+      <h3>💳 Fee Details</h3>
+      <div style="margin-bottom:20px">
+        <div class="stats" style="grid-template-columns:1fr 1fr 1fr">
+          <div class="stat">
+            <div class="val" style="color:var(--text)">₹{{ "{:,.0f}".format(s.total_fee) }}</div>
+            <div class="lbl">Total Fee</div>
+          </div>
+          <div class="stat">
+            <div class="val" style="color:var(--green)">₹{{ "{:,.0f}".format(s.paid_fee) }}</div>
+            <div class="lbl">Paid</div>
+          </div>
+          <div class="stat">
+            <div class="val" style="color:{% if remaining > 0 %}var(--red){% else %}var(--green){% endif %}">₹{{ "{:,.0f}".format(remaining) }}</div>
+            <div class="lbl">Remaining</div>
+          </div>
+        </div>
+      </div>
+      <div class="fee-bar-wrap">
+        <div class="fee-bar-label">
+          <span>Payment Progress</span>
+          <span>{{ "%.0f"|format(s.paid_fee / s.total_fee * 100) if s.total_fee > 0 else 0 }}%</span>
+        </div>
+        <div class="fee-bar">
+          <div class="fee-fill" id="feebar"></div>
+        </div>
+      </div>
+      <div style="margin-top:20px;display:flex;align-items:center;justify-content:space-between">
+        <span style="color:var(--muted);font-size:14px">Fee Status</span>
+        <span class="badge {% if status == 'Paid' %}green{% else %}red{% endif %}" style="font-size:14px;padding:6px 16px">
+          {% if status == 'Paid' %}✅ Fully Paid{% else %}⏳ Pending — ₹{{ "{:,.0f}".format(remaining) }} due{% endif %}
+        </span>
+      </div>
+      {% if remaining > 0 %}
+      <div style="margin-top:16px;padding:12px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:8px;font-size:13px;color:#fca5a5">
+        ⚠️ Please clear your remaining fee of <b>₹{{ "{:,.0f}".format(remaining) }}</b> at the accounts section to continue bus access.
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Live Map -->
+  <div class="card" style="margin-top:24px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;padding-bottom:10px;border-bottom:1px solid var(--border)">
+      <h3 style="margin:0;border:none;padding:0">🗺️ Live Bus Location — {{ s.bus_number }}</h3>
+      <div class="bus-status"><div class="dot"></div>Simulating Movement</div>
+    </div>
+    <div id="map"></div>
+    <div style="display:flex;gap:16px;margin-top:14px;font-size:13px;color:var(--muted);flex-wrap:wrap">
+      <span>📍 Current: <b id="curr-loc" style="color:var(--teal)">Initializing...</b></span>
+      <span>⏱️ ETA: <b id="eta" style="color:var(--green)">Calculating...</b></span>
+      <span>🚌 Bus: <b style="color:var(--accent)">{{ s.bus_number }}</b></span>
+    </div>
+  </div>
+</div>
+
+<script>
+const pct = {{ (s.paid_fee / s.total_fee * 100)|int if s.total_fee > 0 else 0 }};
+setTimeout(()=>{ document.getElementById('feebar').style.width = pct+'%'; }, 300);
+
+// Simulate bus route coordinates for Andhra Pradesh
+const stops = [
+  { name:"{{ s.depart_stop }}", lat:16.5062, lng:80.6480 },
+  { name:"Gudivada", lat:16.4339, lng:80.9961 },
+  { name:"Kaikaluru", lat:16.5500, lng:81.2167 },
+  { name:"VVITU Campus", lat:16.4418, lng:81.7810 },
+];
+let idx = 0, progress = 0;
+const etas = ["45 mins","30 mins","15 mins","Arrived"];
+
+function initMap() {
+  const map = new google.maps.Map(document.getElementById('map'), {
+    center: stops[0],
+    zoom: 10,
+    styles: [
+      { elementType:"geometry", stylers:[{color:"#1a1a2e"}] },
+      { elementType:"labels.text.fill", stylers:[{color:"#8899bb"}] },
+      { featureType:"road", elementType:"geometry", stylers:[{color:"#1e3060"}] },
+      { featureType:"water", elementType:"geometry", stylers:[{color:"#0a1628"}] },
+    ]
+  });
+  // Route polyline
+  const path = stops.map(s=>({lat:s.lat, lng:s.lng}));
+  new google.maps.Polyline({path, map, strokeColor:"#00b4d8", strokeOpacity:0.8, strokeWeight:3});
+  // Stop markers
+  stops.forEach((s,i)=>{
+    new google.maps.Marker({
+      position:{lat:s.lat,lng:s.lng}, map,
+      label:{text:s.name.substring(0,2), color:"#f0a500", fontWeight:"700", fontSize:"11px"},
+      icon:{path:google.maps.SymbolPath.CIRCLE, scale:8, fillColor:i===stops.length-1?"#10b981":"#1a4fa0", fillOpacity:1, strokeColor:"#fff", strokeWeight:2}
+    });
+  });
+  // Bus marker
+  const busIcon = { path:"M -8,-16 L 8,-16 L 10,-4 L 8,0 L -8,0 L -10,-4 Z", fillColor:"#f0a500", fillOpacity:1, strokeColor:"#e8821a", strokeWeight:2, scale:1.8 };
+  const busMark = new google.maps.Marker({ position:stops[0], map, icon:busIcon, zIndex:10 });
+
+  function animateBus() {
+    if (idx >= stops.length - 1) { idx = 0; }
+    const from = stops[idx], to = stops[idx+1];
+    progress += 0.005;
+    if (progress >= 1) { idx++; progress = 0; if(idx>=stops.length-1){idx=0;} return; }
+    const lat = from.lat + (to.lat - from.lat) * progress;
+    const lng = from.lng + (to.lng - from.lng) * progress;
+    busMark.setPosition({lat, lng});
+    map.panTo({lat, lng});
+    document.getElementById('curr-loc').textContent = `${from.name} → ${to.name}`;
+    document.getElementById('eta').textContent = etas[Math.min(idx, etas.length-1)];
+    setTimeout(animateBus, 100);
+  }
+  animateBus();
+}
+window.initMap = initMap;
+</script>
+<script src="https://maps.googleapis.com/maps/api/js?callback=initMap" async defer
+  onerror="document.getElementById('map').innerHTML='<div style=\'padding:40px;text-align:center;color:var(--muted);font-size:14px\'>🗺️ Map unavailable (API key required). Add your Google Maps API key to enable live tracking.</div>'">
+</script>
+{% endblock %}
