@@ -1,1 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{% block title %}VVITU Bus Management System{% endblock %}</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --navy:#0a1628;--navy2:#0f2044;--blue:#1a4fa0;--accent:#f0a500;--accent2:#e8821a;
+  --teal:#00b4d8;--green:#10b981;--red:#ef4444;--text:#e8edf5;--muted:#8899bb;
+  --card:#111e38;--card2:#162040;--border:#1e3060;--radius:12px;
+}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--navy)}
+::-webkit-scrollbar-thumb{background:var(--blue);border-radius:3px}
+body{font-family:'Inter',sans-serif;background:var(--navy);color:var(--text);min-height:100vh}
+a{color:inherit;text-decoration:none}
 
+/* ─── NAV ─── */
+nav{background:var(--navy2);border-bottom:2px solid var(--accent);position:sticky;top:0;z-index:100;box-shadow:0 2px 20px rgba(0,0,0,.5)}
+.nav-inner{max-width:1300px;margin:0 auto;padding:0 24px;display:flex;align-items:center;height:64px;gap:16px}
+.nav-logo{display:flex;align-items:center;gap:12px}
+.nav-logo .logo-circle{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:18px;color:#fff;flex-shrink:0}
+.nav-logo .brand{display:flex;flex-direction:column;line-height:1.1}
+.nav-logo .brand span:first-child{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:18px;color:var(--accent)}
+.nav-logo .brand span:last-child{font-size:11px;color:var(--muted);letter-spacing:.5px}
+.nav-links{display:flex;gap:4px;margin-left:auto}
+.nav-links a{padding:8px 14px;border-radius:8px;font-size:14px;font-weight:500;color:var(--muted);transition:all .2s}
+.nav-links a:hover,.nav-links a.active{background:rgba(26,79,160,.4);color:var(--text)}
+.nav-links a.btn-accent{background:var(--accent);color:#000;font-weight:600;padding:8px 16px}
+.nav-links a.btn-accent:hover{background:var(--accent2)}
+.nav-user{display:flex;align-items:center;gap:10px;margin-left:12px;padding:6px 14px;background:var(--card);border:1px solid var(--border);border-radius:20px;font-size:13px}
+.nav-user .user-avatar{width:28px;height:28px;border-radius:50%;background:var(--teal);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:#fff;flex-shrink:0}
+.nav-user .user-info{display:flex;flex-direction:column;line-height:1.2}
+.nav-user .user-info b{font-size:13px;color:var(--text)}
+.nav-user .user-info small{font-size:11px;color:var(--muted)}
+.nav-logout{font-size:12px;color:var(--red);border-left:1px solid var(--border);margin-left:6px;padding-left:10px;cursor:pointer}
+
+/* ─── FLASH MESSAGES ─── */
+.flash-wrap{max-width:1300px;margin:16px auto;padding:0 24px}
+.flash{padding:12px 18px;border-radius:var(--radius);font-size:14px;display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.flash.error{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);color:#fca5a5}
+.flash.success{background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.4);color:#6ee7b7}
+
+/* ─── COMMON ─── */
+.container{max-width:1300px;margin:0 auto;padding:32px 24px}
+.page-title{font-family:'Rajdhani',sans-serif;font-size:32px;font-weight:700;color:var(--accent);margin-bottom:24px;display:flex;align-items:center;gap:12px}
+.page-title span{font-size:28px}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:28px}
+.card h3{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:600;color:var(--teal);margin-bottom:18px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{background:var(--navy2);color:var(--accent);font-family:'Rajdhani',sans-serif;font-weight:600;letter-spacing:.5px;padding:12px 16px;text-align:left;border-bottom:2px solid var(--border)}
+td{padding:12px 16px;border-bottom:1px solid var(--border);color:var(--text)}
+tr:hover td{background:rgba(26,79,160,.12)}
+.table-wrap{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--border)}
+
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600}
+.badge.green{background:rgba(16,185,129,.2);color:#6ee7b7;border:1px solid rgba(16,185,129,.3)}
+.badge.red{background:rgba(239,68,68,.2);color:#fca5a5;border:1px solid rgba(239,68,68,.3)}
+.badge.blue{background:rgba(0,180,216,.2);color:#7dd3fc;border:1px solid rgba(0,180,216,.3)}
+.badge.amber{background:rgba(240,165,0,.2);color:var(--accent);border:1px solid rgba(240,165,0,.3)}
+
+/* ─── FORMS ─── */
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.5px;margin-bottom:6px;text-transform:uppercase}
+.form-group input,.form-group select,.form-group textarea{width:100%;background:var(--navy);border:1px solid var(--border);border-radius:8px;padding:11px 14px;color:var(--text);font-size:14px;font-family:'Inter',sans-serif;outline:none;transition:border-color .2s}
+.form-group input:focus,.form-group select:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(0,180,216,.1)}
+.form-group select option{background:var(--navy2)}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:11px 24px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all .2s;font-family:'Inter',sans-serif}
+.btn-primary{background:linear-gradient(135deg,var(--blue),var(--teal));color:#fff}
+.btn-primary:hover{opacity:.9;transform:translateY(-1px)}
+.btn-accent{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000}
+.btn-accent:hover{opacity:.9;transform:translateY(-1px)}
+.btn-danger{background:rgba(239,68,68,.2);color:#fca5a5;border:1px solid rgba(239,68,68,.3)}
+.btn-danger:hover{background:rgba(239,68,68,.3)}
+.btn-sm{padding:6px 14px;font-size:12px}
+.btn-full{width:100%;justify-content:center}
+
+/* ─── STAT CARDS ─── */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:28px}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;text-align:center}
+.stat .val{font-family:'Rajdhani',sans-serif;font-size:32px;font-weight:700}
+.stat .lbl{font-size:12px;color:var(--muted);margin-top:4px;letter-spacing:.5px}
+</style>
+{% block extra_head %}{% endblock %}
+</head>
+<body>
+<nav>
+  <div class="nav-inner">
+    <div class="nav-logo">
+      <div class="logo-circle">VV</div>
+      <div class="brand">
+        <span>VVITU</span>
+        <span>Vasireddy Venkatadri Institute</span>
+      </div>
+    </div>
+    <div class="nav-links">
+      <a href="/" {% if request.path=='/' %}class="active"{% endif %}>Home</a>
+      <a href="/bus-routes" {% if request.path=='/bus-routes' %}class="active"{% endif %}>Bus Routes</a>
+      <a href="/live-tracker" {% if request.path=='/live-tracker' %}class="active"{% endif %}>Live Tracker</a>
+      {% if not student and not staff %}
+      <a href="/student-login">Student Login</a>
+      <a href="/staff-login">Staff Login</a>
+      {% endif %}
+      {% if student %}
+      <a href="/student-dashboard" class="btn-accent">My Dashboard</a>
+      {% endif %}
+      {% if staff %}
+      <a href="/admin" class="btn-accent">Admin Panel</a>
+      {% endif %}
+    </div>
+    {% if student %}
+    <div class="nav-user">
+      <div class="user-avatar">{{ student.name[0] }}</div>
+      <div class="user-info"><b>{{ student.name }}</b><small>{{ student.roll }}</small></div>
+      <a href="/logout" class="nav-logout">Logout</a>
+    </div>
+    {% elif staff %}
+    <div class="nav-user">
+      <div class="user-avatar" style="background:var(--accent);color:#000">{{ staff.name[0] }}</div>
+      <div class="user-info"><b>{{ staff.name }}</b><small>Staff #{{ staff.id }}</small></div>
+      <a href="/logout" class="nav-logout">Logout</a>
+    </div>
+    {% endif %}
+  </div>
+</nav>
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}<div class="flash-wrap">{% for cat,msg in messages %}<div class="flash {{cat}}">{{ msg }}</div>{% endfor %}</div>{% endif %}
+{% endwith %}
+{% block content %}{% endblock %}
+</body>
+</html>
