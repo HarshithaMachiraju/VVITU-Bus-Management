@@ -1,1 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Live Tracker | VVITU Bus Management{% endblock %}
+{% block extra_head %}
+<style>
+#map{height:500px;border-radius:12px;border:1px solid var(--border)}
+.bus-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:24px}
+.bus-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;cursor:pointer;transition:all .2s}
+.bus-card:hover,.bus-card.active{border-color:var(--teal);background:var(--card2)}
+.bus-card h4{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;color:var(--accent);margin-bottom:4px}
+.bus-card p{font-size:12px;color:var(--muted);margin-bottom:8px}
+.status-dot{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;margin-right:5px;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+</style>
+{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="page-title"><span>🗺️</span> Live Bus Tracker</div>
+  <div class="bus-cards" id="bus-cards">
+    <div class="bus-card active" data-bus="BUS-101" onclick="focusBus(this,'BUS-101')"><h4>BUS-101</h4><p>Vijayawada Route</p><span class="status-dot"></span><span class="badge green" style="font-size:11px">On Time</span></div>
+    <div class="bus-card" data-bus="BUS-102" onclick="focusBus(this,'BUS-102')"><h4>BUS-102</h4><p>Machilipatnam Route</p><span class="status-dot"></span><span class="badge green" style="font-size:11px">On Time</span></div>
+    <div class="bus-card" data-bus="BUS-103" onclick="focusBus(this,'BUS-103')"><h4>BUS-103</h4><p>Eluru Route</p><span class="status-dot" style="background:var(--accent)"></span><span class="badge amber" style="font-size:11px">Delayed</span></div>
+    <div class="bus-card" data-bus="BUS-104" onclick="focusBus(this,'BUS-104')"><h4>BUS-104</h4><p>Gudivada Route</p><span class="status-dot"></span><span class="badge green" style="font-size:11px">On Time</span></div>
+    <div class="bus-card" data-bus="BUS-105" onclick="focusBus(this,'BUS-105')"><h4>BUS-105</h4><p>Kakinada Route</p><span class="status-dot"></span><span class="badge green" style="font-size:11px">On Time</span></div>
+  </div>
+  <div class="card" style="padding:20px">
+    <div id="map"></div>
+    <div style="display:flex;gap:20px;margin-top:14px;flex-wrap:wrap;font-size:13px;color:var(--muted)">
+      <span>🚌 Tracking: <b id="tracking-bus" style="color:var(--accent)">BUS-101</b></span>
+      <span>📍 Position: <b id="curr-pos" style="color:var(--teal)">Initializing...</b></span>
+      <span>⏱️ Status: <b id="bus-status-txt" style="color:var(--green)">On Time</b></span>
+    </div>
+  </div>
+</div>
+<script>
+const buses = {
+  'BUS-101':{route:[{name:"Vijayawada",lat:16.5062,lng:80.6480},{name:"Gudivada",lat:16.4339,lng:80.9961},{name:"VVITU",lat:16.4418,lng:81.7810}],color:"#00b4d8",status:"On Time"},
+  'BUS-102':{route:[{name:"Machilipatnam",lat:16.1875,lng:81.1363},{name:"Bantumilli",lat:16.3000,lng:81.2000},{name:"VVITU",lat:16.4418,lng:81.7810}],color:"#10b981",status:"On Time"},
+  'BUS-103':{route:[{name:"Eluru",lat:16.7107,lng:81.0952},{name:"Bhimavaram",lat:16.5449,lng:81.5212},{name:"VVITU",lat:16.4418,lng:81.7810}],color:"#f0a500",status:"Delayed"},
+  'BUS-104':{route:[{name:"Gudivada",lat:16.4339,lng:80.9961},{name:"Pedana",lat:16.2553,lng:81.1455},{name:"VVITU",lat:16.4418,lng:81.7810}],color:"#a78bfa",status:"On Time"},
+  'BUS-105':{route:[{name:"Kakinada",lat:16.9891,lng:82.2475},{name:"Narsapur",lat:16.4341,lng:81.6975},{name:"VVITU",lat:16.4418,lng:81.7810}],color:"#f87171",status:"On Time"},
+};
+let map, markers={}, polylines={}, animIdx={}, animProg={}, animTimer;
+let currentBus = 'BUS-101';
 
+function initMap(){
+  map = new google.maps.Map(document.getElementById('map'),{
+    center:{lat:16.5,lng:81.3}, zoom:9,
+    styles:[
+      {elementType:"geometry",stylers:[{color:"#1a1a2e"}]},
+      {elementType:"labels.text.fill",stylers:[{color:"#8899bb"}]},
+      {featureType:"road",elementType:"geometry",stylers:[{color:"#1e3060"}]},
+      {featureType:"water",elementType:"geometry",stylers:[{color:"#0a1628"}]},
+    ]
+  });
+  Object.keys(buses).forEach(id => {
+    const b = buses[id];
+    polylines[id] = new google.maps.Polyline({
+      path: b.route.map(s=>({lat:s.lat,lng:s.lng})),
+      map, strokeColor:b.color, strokeOpacity:id===currentBus?0.9:0.2, strokeWeight:3
+    });
+    markers[id] = new google.maps.Marker({
+      position:b.route[0], map,
+      icon:{path:"M -8,-16 L 8,-16 L 10,-4 L 8,0 L -8,0 L -10,-4 Z",fillColor:b.color,fillOpacity:1,strokeColor:"#fff",strokeWeight:1.5,scale:1.6},
+      zIndex:10
+    });
+    animIdx[id] = 0; animProg[id] = Math.random();
+  });
+  animate();
+}
+function animate(){
+  Object.keys(buses).forEach(id=>{
+    const b = buses[id];
+    animProg[id] += 0.004;
+    if(animProg[id]>=1){ animIdx[id]=(animIdx[id]+1)%(b.route.length-1); animProg[id]=0; }
+    const from=b.route[animIdx[id]], to=b.route[animIdx[id]+1]||b.route[0];
+    const lat=from.lat+(to.lat-from.lat)*animProg[id];
+    const lng=from.lng+(to.lng-from.lng)*animProg[id];
+    markers[id].setPosition({lat,lng});
+    if(id===currentBus){
+      document.getElementById('curr-pos').textContent=`${from.name} → ${to.name}`;
+    }
+  });
+  requestAnimationFrame(()=>setTimeout(animate,120));
+}
+function focusBus(el, busId){
+  document.querySelectorAll('.bus-card').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  currentBus = busId;
+  document.getElementById('tracking-bus').textContent = busId;
+  document.getElementById('bus-status-txt').textContent = buses[busId].status;
+  document.getElementById('bus-status-txt').style.color = buses[busId].status==='On Time'?'var(--green)':'var(--accent)';
+  Object.keys(polylines).forEach(id=>{
+    polylines[id].setOptions({strokeOpacity: id===busId?0.9:0.15});
+  });
+  map.panTo(markers[busId].getPosition());
+}
+window.initMap = initMap;
+</script>
+<script src="https://maps.googleapis.com/maps/api/js?callback=initMap" async defer
+  onerror="document.getElementById('map').innerHTML='<div style=\'padding:60px;text-align:center;color:var(--muted)\'>🗺️ Add a Google Maps API key to enable live tracking simulation.</div>'">
+</script>
+{% endblock %}
