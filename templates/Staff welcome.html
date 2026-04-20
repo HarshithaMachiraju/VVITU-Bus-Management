@@ -1,1 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Welcome | VVITU Bus Management{% endblock %}
+{% block extra_head %}
+<style>
+.welcome-wrap{min-height:calc(100vh - 64px);display:flex;align-items:center;justify-content:center;padding:32px 24px}
+.welcome-box{width:100%;max-width:520px;text-align:center}
+.checkmark{width:90px;height:90px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--teal));display:flex;align-items:center;justify-content:center;font-size:42px;margin:0 auto 28px;animation:popIn .5s ease}
+@keyframes popIn{0%{transform:scale(0);opacity:0}70%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
+.welcome-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:40px;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:24px 0}
+.info-item{background:var(--navy2);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center}
+.info-item .v{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;color:var(--teal)}
+.info-item .l{font-size:12px;color:var(--muted);margin-top:4px}
+</style>
+{% endblock %}
+{% block content %}
+<div class="welcome-wrap">
+  <div class="welcome-box">
+    <div class="welcome-card">
+      <div class="checkmark">✓</div>
+      <h1 style="font-family:'Rajdhani',sans-serif;font-size:30px;font-weight:700;color:var(--green);margin-bottom:10px">
+        Login Successful!
+      </h1>
+      <p style="font-size:17px;color:var(--text);margin-bottom:6px">Welcome to <b style="color:var(--accent)">VVITU Bus Management</b></p>
+      <p style="font-size:14px;color:var(--muted)">and Digital Transport System</p>
 
+      <div class="info-grid">
+        <div class="info-item">
+          <div class="v">{{ staff.name }}</div>
+          <div class="l">Staff Name</div>
+        </div>
+        <div class="info-item">
+          <div class="v">#{{ staff.id }}</div>
+          <div class="l">Staff ID</div>
+        </div>
+        <div class="info-item">
+          <div class="v">{{ staff.bus_number or 'N/A' }}</div>
+          <div class="l">Bus Number</div>
+        </div>
+        <div class="info-item">
+          <div class="v">{{ staff.depart_stop or 'N/A' }}</div>
+          <div class="l">Departure Stop</div>
+        </div>
+      </div>
+
+      <a href="/admin" class="btn btn-accent btn-full" style="font-size:16px;padding:14px">
+        Go to Admin Panel →
+      </a>
+      <div style="margin-top:14px">
+        <a href="/" style="font-size:13px;color:var(--muted)">Back to Home</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
